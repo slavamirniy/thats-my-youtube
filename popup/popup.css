@@ -1,0 +1,165 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+}
+
+.popup-container {
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(90deg, #ff0000, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.research-mode {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #333;
+}
+
+.mode-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mode-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mode-status {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.mode-status.off {
+  background: #333;
+  color: #888;
+}
+
+.mode-status.on {
+  background: #ff0000;
+  color: #fff;
+}
+
+.timer {
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #ff6b6b;
+}
+
+.timer.hidden {
+  display: none;
+}
+
+#time-left {
+  font-weight: 600;
+  font-family: monospace;
+  font-size: 16px;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #ff0000;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #cc0000;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}
+
+.description {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.description strong {
+  color: #ff6b6b;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.link {
+  display: block;
+  padding: 10px 16px;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  border: 1px solid #333;
+  transition: all 0.2s ease;
+}
+
+.link:hover {
+  background: #252525;
+  border-color: #ff0000;
+}
+
+.footer {
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+  margin-top: 16px;
+}
+
+.footer span {
+  font-size: 11px;
+  color: #555;
+}

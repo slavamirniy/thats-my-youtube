@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "That's My YouTube",
+  "version": "1.0.0",
+  "description": "Замена домашней страницы YouTube на Watch Later + конспекты к видео",
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": [
+        "content/state.js",
+        "content/utils.js",
+        "content/api.js",
+        "content/obsidian.js",
+        "content/home.js",
+        "content/notes.js",
+        "content/video.js",
+        "content/research.js",
+        "content/main.js"
+      ],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pages/*", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

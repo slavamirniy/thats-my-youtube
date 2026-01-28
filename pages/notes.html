@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конспекты — That's My YouTube</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --surface: #111113;
+      --surface-2: #18181b;
+      --border: #27272a;
+      --text: #fafafa;
+      --text-muted: #71717a;
+      --accent: #22d3ee;
+      --accent-dim: rgba(34, 211, 238, 0.1);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+    }
+    
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      clip-path: polygon(20% 0%, 100% 50%, 20% 100%);
+    }
+    
+    .logo h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 24px;
+      font-weight: 400;
+      font-style: italic;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    
+    .btn-primary:hover {
+      opacity: 0.9;
+      color: var(--bg);
+    }
+    
+    .stats {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+    
+    .stat {
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .note-card {
+      display: grid;
+      grid-template-columns: 160px 1fr auto;
+      gap: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .note-card:hover {
+      border-color: var(--accent);
+    }
+    
+    .note-thumb {
+      aspect-ratio: 16/9;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+    
+    .note-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .note-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .note-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .note-preview {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .note-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .note-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .note-btn {
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    
+    .note-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .note-btn.delete:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    
+    .empty {
+      text-align: center;
+      padding: 80px;
+      color: var(--text-muted);
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+    }
+    
+    .modal-overlay.hidden {
+      display: none;
+    }
+    
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: 800px;
+      max-width: 90%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .modal-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .modal-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    
+    .modal-body h1, .modal-body h2, .modal-body h3 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      color: var(--accent);
+      margin: 24px 0 12px;
+    }
+    
+    .modal-body code {
+      background: var(--bg);
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+    
+    .modal-body ul, .modal-body ol {
+      padding-left: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon"></div>
+        <h1>Мои конспекты</h1>
+      </div>
+      <div class="actions">
+        <button class="btn" id="exportAll">Экспорт всех</button>
+      </div>
+    </header>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="totalNotes">0</div>
+        <div class="stat-label">Конспектов</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalChars">0</div>
+        <div class="stat-label">Символов</div>
+      </div>
+    </div>
+    
+    <div class="notes-list" id="notesList">
+      <div class="empty">Загрузка...</div>
+    </div>
+  </div>
+  
+  <div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle"></span>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+  
+  <script src="notes.js"></script>
+</body>
+</html>

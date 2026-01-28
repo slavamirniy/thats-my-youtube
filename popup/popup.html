@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>That's My YouTube</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <h1>🎬 That's My YouTube</h1>
+    </div>
+    
+    <div class="section">
+      <div class="research-mode">
+        <div class="mode-info">
+          <span class="mode-label">Режим ресёрча</span>
+          <span id="mode-status" class="mode-status off">Выключен</span>
+        </div>
+        <div id="timer" class="timer hidden">
+          Осталось: <span id="time-left">60:00</span>
+        </div>
+        <button id="toggle-research" class="btn btn-primary">
+          🔬 Включить на 1 час
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="description">
+        Когда режим ресёрча <strong>выключен</strong>, домашняя страница YouTube заменяется на твою кастомную страницу.
+      </p>
+      <p class="description">
+        Включи режим ресёрча, чтобы временно видеть стандартный YouTube.
+      </p>
+    </div>
+
+    <div class="section links">
+      <a href="https://www.youtube.com/playlist?list=WL" target="_blank" class="link">
+        📋 Смотреть позже
+      </a>
+    </div>
+
+    <div class="footer">
+      <span>v1.0.0</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
