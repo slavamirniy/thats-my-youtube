@@ -18,21 +18,29 @@
           <span class="mode-label">Режим ресёрча</span>
           <span id="mode-status" class="mode-status off">Выключен</span>
         </div>
+        
+        <div class="usage-bar">
+          <div id="used-bar" class="usage-fill"></div>
+        </div>
+        <div class="usage-info">
+          <span id="used-text">00:00 / 60:00</span>
+          <span id="reset-info" class="reset-info hidden"></span>
+        </div>
+        
         <div id="timer" class="timer hidden">
           Осталось: <span id="time-left">60:00</span>
         </div>
+        
         <button id="toggle-research" class="btn btn-primary">
-          🔬 Включить на 1 час
+          🔬 Включить
         </button>
       </div>
     </div>
 
     <div class="section">
       <p class="description">
-        Когда режим ресёрча <strong>выключен</strong>, домашняя страница YouTube заменяется на твою кастомную страницу.
-      </p>
-      <p class="description">
-        Включи режим ресёрча, чтобы временно видеть стандартный YouTube.
+        <strong>1 час</strong> режима ресёрча на <strong>12 часов</strong>.<br>
+        Можно включать и выключать — время суммируется.
       </p>
     </div>
 

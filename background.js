@@ -1,8 +1,13 @@
+const RESEARCH_LIMIT_MS = 60 * 60 * 1000; // 1 hour
+const RESEARCH_RESET_MS = 12 * 60 * 60 * 1000; // 12 hours
+
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['notes', 'history', 'playlists', 'settings'], (data) => {
+  chrome.storage.local.get(['notes', 'history', 'playlists', 'settings', 'researchUsed', 'researchResetTime'], (data) => {
     chrome.storage.local.set({
       researchMode: false,
-      researchModeEndTime: null,
+      researchUsed: data.researchUsed || 0,
+      researchResetTime: data.researchResetTime || null,
+      researchStartedAt: null,
       notes: data.notes || {},
       history: data.history || [],
       playlists: data.playlists || [],
@@ -12,12 +17,24 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'researchModeEnd') {
-    chrome.storage.local.set({
-      researchMode: false,
-      researchModeEndTime: null
+  if (alarm.name === 'researchLimitReached') {
+    chrome.storage.local.get(['researchStartedAt', 'researchUsed'], async (data) => {
+      if (data.researchStartedAt) {
+        const sessionTime = Date.now() - data.researchStartedAt;
+        const newUsed = Math.min((data.researchUsed || 0) + sessionTime, RESEARCH_LIMIT_MS);
+        await chrome.storage.local.set({
+          researchMode: false,
+          researchUsed: newUsed,
+          researchStartedAt: null
+        });
+      } else {
+        await chrome.storage.local.set({ researchMode: false, researchStartedAt: null });
+      }
+      notifyTabs('researchModeChanged', { enabled: false });
     });
-    notifyTabs('researchModeChanged', { enabled: false });
+  }
+  if (alarm.name === 'researchReset') {
+    chrome.storage.local.set({ researchUsed: 0, researchResetTime: null });
   }
 });
 
@@ -33,27 +50,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handlers = {
     // Research Mode
     enableResearchMode: async () => {
-      const endTime = Date.now() + 60 * 60 * 1000;
-      await chrome.storage.local.set({ researchMode: true, researchModeEndTime: endTime });
-      chrome.alarms.create('researchModeEnd', { when: endTime });
+      const data = await chrome.storage.local.get(['researchUsed', 'researchResetTime']);
+      let used = data.researchUsed || 0;
+      let resetTime = data.researchResetTime;
+      
+      // Check if reset period passed
+      if (resetTime && Date.now() > resetTime) {
+        used = 0;
+        resetTime = null;
+      }
+      
+      // Check if limit reached
+      if (used >= RESEARCH_LIMIT_MS) {
+        return { success: false, error: 'limit_reached', resetTime };
+      }
+      
+      const remaining = RESEARCH_LIMIT_MS - used;
+      const now = Date.now();
+      
+      // Set reset time if not set
+      if (!resetTime) {
+        resetTime = now + RESEARCH_RESET_MS;
+        chrome.alarms.create('researchReset', { when: resetTime });
+      }
+      
+      await chrome.storage.local.set({
+        researchMode: true,
+        researchStartedAt: now,
+        researchResetTime: resetTime
+      });
+      
+      // Alarm when limit will be reached
+      chrome.alarms.create('researchLimitReached', { when: now + remaining });
       notifyTabs('researchModeChanged', { enabled: true });
-      return { success: true, endTime };
+      return { success: true, remaining, used, resetTime };
     },
     
     disableResearchMode: async () => {
-      await chrome.storage.local.set({ researchMode: false, researchModeEndTime: null });
-      chrome.alarms.clear('researchModeEnd');
+      const data = await chrome.storage.local.get(['researchStartedAt', 'researchUsed']);
+      let newUsed = data.researchUsed || 0;
+      
+      if (data.researchStartedAt) {
+        const sessionTime = Date.now() - data.researchStartedAt;
+        newUsed = Math.min(newUsed + sessionTime, RESEARCH_LIMIT_MS);
+      }
+      
+      await chrome.storage.local.set({
+        researchMode: false,
+        researchUsed: newUsed,
+        researchStartedAt: null
+      });
+      chrome.alarms.clear('researchLimitReached');
       notifyTabs('researchModeChanged', { enabled: false });
-      return { success: true };
+      return { success: true, used: newUsed };
     },
     
     getResearchMode: async () => {
-      const data = await chrome.storage.local.get(['researchMode', 'researchModeEndTime']);
-      if (data.researchMode && data.researchModeEndTime && Date.now() > data.researchModeEndTime) {
-        await chrome.storage.local.set({ researchMode: false, researchModeEndTime: null });
-        return { researchMode: false, endTime: null };
+      const data = await chrome.storage.local.get(['researchMode', 'researchUsed', 'researchStartedAt', 'researchResetTime']);
+      let used = data.researchUsed || 0;
+      let resetTime = data.researchResetTime;
+      
+      // Check if reset period passed
+      if (resetTime && Date.now() > resetTime) {
+        used = 0;
+        resetTime = null;
+        await chrome.storage.local.set({ researchUsed: 0, researchResetTime: null });
       }
-      return { researchMode: data.researchMode, endTime: data.researchModeEndTime };
+      
+      // Calculate current used time if active
+      if (data.researchMode && data.researchStartedAt) {
+        const sessionTime = Date.now() - data.researchStartedAt;
+        const totalUsed = used + sessionTime;
+        
+        // Auto-disable if over limit
+        if (totalUsed >= RESEARCH_LIMIT_MS) {
+          await chrome.storage.local.set({
+            researchMode: false,
+            researchUsed: RESEARCH_LIMIT_MS,
+            researchStartedAt: null
+          });
+          return { researchMode: false, used: RESEARCH_LIMIT_MS, remaining: 0, resetTime };
+        }
+        
+        return {
+          researchMode: true,
+          used: totalUsed,
+          remaining: RESEARCH_LIMIT_MS - totalUsed,
+          resetTime,
+          startedAt: data.researchStartedAt
+        };
+      }
+      
+      return {
+        researchMode: data.researchMode || false,
+        used,
+        remaining: RESEARCH_LIMIT_MS - used,
+        resetTime
+      };
     },
     
     // Notes

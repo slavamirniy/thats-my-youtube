@@ -71,6 +71,43 @@ body {
   color: #fff;
 }
 
+.mode-status.limit {
+  background: #ff6b00;
+  color: #fff;
+}
+
+.usage-bar {
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff0000, #ff6b6b);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.usage-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.reset-info {
+  color: #ff6b6b;
+}
+
+.reset-info.hidden {
+  display: none;
+}
+
 .timer {
   text-align: center;
   margin-bottom: 12px;
@@ -115,6 +152,16 @@ body {
 
 .btn-secondary:hover {
   background: #444;
+}
+
+.btn-disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.btn-disabled:hover {
+  background: #333;
 }
 
 .description {
