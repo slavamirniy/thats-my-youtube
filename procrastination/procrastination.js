@@ -6,6 +6,7 @@ let overlay = null;
 let timerBadge = null;
 let currentNoteId = null;
 let mutedElements = [];
+let autoSaveInterval = null;
 
 async function sendMessage(msg) {
   return new Promise((resolve) => {
@@ -154,13 +155,26 @@ function unmuteAllMedia() {
 function showOverlay() {
   if (!overlay) createOverlay();
   overlay.classList.add('visible');
+  document.body.classList.add('tmy-proc-blocked');
   muteAllMedia();
   loadNotes();
+  
+  // Start autosave
+  if (autoSaveInterval) clearInterval(autoSaveInterval);
+  autoSaveInterval = setInterval(saveCurrentNote, 5000);
 }
 
 function hideOverlay() {
   if (overlay) overlay.classList.remove('visible');
+  document.body.classList.remove('tmy-proc-blocked');
   unmuteAllMedia();
+  
+  // Save and stop autosave
+  saveCurrentNote();
+  if (autoSaveInterval) {
+    clearInterval(autoSaveInterval);
+    autoSaveInterval = null;
+  }
 }
 
 function updateTimerBadge(remaining) {
