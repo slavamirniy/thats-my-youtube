@@ -8,7 +8,8 @@
     "alarms"
   ],
   "host_permissions": [
-    "https://www.youtube.com/*"
+    "https://www.youtube.com/*",
+    "https://www.instagram.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -41,6 +42,12 @@
         "content/main.js"
       ],
       "css": ["content/content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["procrastination/procrastination.js"],
+      "css": ["procrastination/procrastination.css"],
       "run_at": "document_idle"
     }
   ],

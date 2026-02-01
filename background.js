@@ -1,5 +1,7 @@
 const RESEARCH_LIMIT_MS = 60 * 60 * 1000; // 1 hour
 const RESEARCH_RESET_MS = 12 * 60 * 60 * 1000; // 12 hours
+const PROCRASTINATION_WATCH_MS = 3 * 60 * 1000; // 3 minutes watch
+const PROCRASTINATION_PAUSE_MS = 3 * 60 * 1000; // 3 minutes pause
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['notes', 'history', 'playlists', 'settings', 'researchUsed', 'researchResetTime'], (data) => {
@@ -231,6 +233,92 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     getSettings: async () => {
       const data = await chrome.storage.local.get(['settings']);
       return data.settings || {};
+    },
+    
+    // Procrastination timer
+    getProcrastinationState: async () => {
+      const data = await chrome.storage.local.get(['procrastination']);
+      const state = data.procrastination || {};
+      const site = message.site;
+      const siteState = state[site] || { phase: 'watch', phaseStartedAt: Date.now() };
+      
+      const now = Date.now();
+      const elapsed = now - siteState.phaseStartedAt;
+      
+      if (siteState.phase === 'watch' && elapsed >= PROCRASTINATION_WATCH_MS) {
+        // Switch to pause
+        siteState.phase = 'pause';
+        siteState.phaseStartedAt = now;
+        state[site] = siteState;
+        await chrome.storage.local.set({ procrastination: state });
+        return { phase: 'pause', remaining: PROCRASTINATION_PAUSE_MS };
+      }
+      
+      if (siteState.phase === 'pause' && elapsed >= PROCRASTINATION_PAUSE_MS) {
+        // Switch to watch
+        siteState.phase = 'watch';
+        siteState.phaseStartedAt = now;
+        state[site] = siteState;
+        await chrome.storage.local.set({ procrastination: state });
+        return { phase: 'watch', remaining: PROCRASTINATION_WATCH_MS };
+      }
+      
+      const limit = siteState.phase === 'watch' ? PROCRASTINATION_WATCH_MS : PROCRASTINATION_PAUSE_MS;
+      return { phase: siteState.phase, remaining: limit - elapsed };
+    },
+    
+    initProcrastination: async () => {
+      const data = await chrome.storage.local.get(['procrastination']);
+      const state = data.procrastination || {};
+      const site = message.site;
+      
+      if (!state[site]) {
+        state[site] = { phase: 'watch', phaseStartedAt: Date.now() };
+        await chrome.storage.local.set({ procrastination: state });
+      }
+      
+      return await handlers.getProcrastinationState();
+    },
+    
+    // Procrastination notes
+    getProcrastinationNotes: async () => {
+      const data = await chrome.storage.local.get(['procrastinationNotes']);
+      return { notes: data.procrastinationNotes || [] };
+    },
+    
+    saveProcrastinationNote: async () => {
+      const data = await chrome.storage.local.get(['procrastinationNotes']);
+      const notes = data.procrastinationNotes || [];
+      const existing = notes.find(n => n.id === message.noteId);
+      if (existing) {
+        existing.content = message.content;
+        existing.updatedAt = Date.now();
+      } else {
+        notes.unshift({
+          id: message.noteId || `proc_${Date.now()}`,
+          title: message.title || 'Без названия',
+          content: message.content,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+      }
+      await chrome.storage.local.set({ procrastinationNotes: notes });
+      return { success: true, notes };
+    },
+    
+    createProcrastinationNote: async () => {
+      const data = await chrome.storage.local.get(['procrastinationNotes']);
+      const notes = data.procrastinationNotes || [];
+      const newNote = {
+        id: `proc_${Date.now()}`,
+        title: message.title || 'Новая заметка',
+        content: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      notes.unshift(newNote);
+      await chrome.storage.local.set({ procrastinationNotes: notes });
+      return { success: true, note: newNote, notes };
     }
   };
   
