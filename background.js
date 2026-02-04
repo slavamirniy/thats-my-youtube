@@ -5,10 +5,19 @@ const PROCRASTINATION_PAUSE_MS = 3 * 60 * 1000; // 3 minutes pause
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['notes', 'history', 'playlists', 'settings', 'researchUsed', 'researchResetTime'], (data) => {
+    let researchUsed = data.researchUsed || 0;
+    let researchResetTime = data.researchResetTime || null;
+    
+    // Check if reset period passed
+    if (researchResetTime && Date.now() > researchResetTime) {
+      researchUsed = 0;
+      researchResetTime = null;
+    }
+    
     chrome.storage.local.set({
       researchMode: false,
-      researchUsed: data.researchUsed || 0,
-      researchResetTime: data.researchResetTime || null,
+      researchUsed,
+      researchResetTime,
       researchStartedAt: null,
       notes: data.notes || {},
       history: data.history || [],
@@ -16,6 +25,21 @@ chrome.runtime.onInstalled.addListener(() => {
       settings: data.settings || {}
     });
   });
+});
+
+// Check reset on every startup (service worker wake)
+chrome.storage.local.get(['researchUsed', 'researchResetTime', 'researchMode'], (data) => {
+  let researchUsed = data.researchUsed || 0;
+  let researchResetTime = data.researchResetTime;
+  
+  if (researchResetTime && Date.now() > researchResetTime) {
+    chrome.storage.local.set({
+      researchUsed: 0,
+      researchResetTime: null,
+      researchMode: false,
+      researchStartedAt: null
+    });
+  }
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -48,6 +72,42 @@ function notifyTabs(type, data = {}) {
   });
 }
 
+// Pause research mode when no YouTube tabs are open
+async function checkYouTubeTabs() {
+  const tabs = await chrome.tabs.query({ url: 'https://www.youtube.com/*' });
+  const data = await chrome.storage.local.get(['researchMode', 'researchStartedAt', 'researchUsed', 'researchPaused']);
+  
+  if (data.researchMode && data.researchStartedAt) {
+    if (tabs.length === 0 && !data.researchPaused) {
+      // No YouTube tabs - pause timer
+      const sessionTime = Date.now() - data.researchStartedAt;
+      const newUsed = Math.min((data.researchUsed || 0) + sessionTime, RESEARCH_LIMIT_MS);
+      await chrome.storage.local.set({
+        researchUsed: newUsed,
+        researchStartedAt: null,
+        researchPaused: true
+      });
+      chrome.alarms.clear('researchLimitReached');
+    } else if (tabs.length > 0 && data.researchPaused && data.researchMode) {
+      // YouTube tab opened and research mode is ON - resume timer
+      const remaining = RESEARCH_LIMIT_MS - (data.researchUsed || 0);
+      if (remaining > 0) {
+        const now = Date.now();
+        await chrome.storage.local.set({
+          researchStartedAt: now,
+          researchPaused: false
+        });
+        chrome.alarms.create('researchLimitReached', { when: now + remaining });
+      }
+    }
+  }
+}
+
+chrome.tabs.onRemoved.addListener(checkYouTubeTabs);
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) checkYouTubeTabs();
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handlers = {
     // Research Mode
@@ -79,7 +139,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       await chrome.storage.local.set({
         researchMode: true,
         researchStartedAt: now,
-        researchResetTime: resetTime
+        researchResetTime: resetTime,
+        researchPaused: false
       });
       
       // Alarm when limit will be reached
